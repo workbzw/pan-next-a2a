@@ -147,7 +147,6 @@ export const translations = {
     serviceMarketplace: "Service Marketplace (Agent Plaza Hot)",
     noAgentsAvailable: "No Agents available",
     tryAgent: "Try Agent",
-    pricePending: "Price Pending",
   },
   "zh-TW": {
     // Header
@@ -295,7 +294,6 @@ export const translations = {
     serviceMarketplace: "服務市場 (Agent Plaza 熱門)",
     noAgentsAvailable: "暫無 Agent",
     tryAgent: "試用 Agent",
-    pricePending: "價格待定",
   },
 };
 
