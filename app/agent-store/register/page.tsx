@@ -4,7 +4,8 @@ import type { NextPage } from "next";
 import { useState } from "react";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { addQueryParams } from "~~/utils/urlParams";
+import { LinkWithParams } from "~~/components/LinkWithParams";
 import { useLanguage } from "~~/utils/i18n/LanguageContext";
 import { useAgentCard } from "~~/hooks/useAgentCard";
 
@@ -60,7 +61,7 @@ const RegisterAgent: NextPage = () => {
       });
 
       // 成功后跳转
-      router.push("/agent-store");
+      router.push(addQueryParams("/agent-store"));
     } catch (error: any) {
       console.error("Registration error:", error);
       setValidationError(error.message || t("registrationFailed") || "Registration failed");
@@ -74,9 +75,9 @@ const RegisterAgent: NextPage = () => {
       <div className="flex items-center flex-col grow pt-10 pb-10 bg-gradient-to-br from-[#1A110A] via-[#261A10] to-[#1A110A] min-h-screen animate-gradient">
         <div className="px-5 w-full max-w-3xl">
           <div className="mb-8">
-            <Link href="/agent-store" className="btn btn-sm mb-4 bg-[#261A10]/50 backdrop-blur-sm border-[#FF6B00]/20 text-white hover:bg-[#FF6B00]/20 transition-all">
+            <LinkWithParams href="/agent-store" className="btn btn-sm mb-4 bg-[#261A10]/50 backdrop-blur-sm border-[#FF6B00]/20 text-white hover:bg-[#FF6B00]/20 transition-all">
               {t("backToStore")}
-            </Link>
+            </LinkWithParams>
             <h1 className="text-4xl font-bold mb-3 animate-text-shimmer">
               {t("registerNewAgentTitle")}
             </h1>
@@ -167,12 +168,12 @@ const RegisterAgent: NextPage = () => {
 
                 {/* 提交按钮 */}
                 <div className="flex gap-4 pt-4">
-                  <Link 
+                  <LinkWithParams 
                     href="/agent-store" 
                     className="btn flex-1 h-14 text-base rounded-lg bg-[#1A110A]/50 border-2 border-[#261A10]/50 text-white hover:bg-[#261A10]/70 hover:border-[#FF6B00]/50 transition-all duration-300"
                   >
                     {t("cancel")}
-                  </Link>
+                  </LinkWithParams>
                   <button
                     type="submit"
                     className="btn flex-1 h-14 text-base font-semibold rounded-lg bg-[#FF6B00] hover:bg-[#FF8C00] text-white border-0 transition-all duration-300 transform hover:scale-[1.02] animate-pulse-glow"

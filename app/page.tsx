@@ -3,7 +3,7 @@
 import type { NextPage } from "next";
 import { useState, useEffect, useMemo } from "react";
 import { useScaffoldReadContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
-import Link from "next/link";
+import { LinkWithParams } from "~~/components/LinkWithParams";
 import { useLanguage } from "~~/utils/i18n/LanguageContext";
 import { useAgentCard } from "~~/hooks/useAgentCard";
 import { AgentCardSummary } from "~~/components/AgentCard/AgentCardSummary";
@@ -125,12 +125,12 @@ const AgentStore: NextPage = () => {
             <h1 className="text-4xl font-bold animate-text-shimmer">
               {t("agentShop")}
             </h1>
-            <Link 
+            <LinkWithParams 
               href="/agent-store/register" 
               className="btn rounded-lg bg-[#FF6B00] hover:bg-[#FF8C00] text-white border-0 transition-all duration-300 transform hover:scale-105 animate-pulse-glow"
             >
               {t("registerNewAgent")}
-            </Link>
+            </LinkWithParams>
           </div>
 
           {/* Agent 列表 */}
@@ -214,7 +214,7 @@ function AgentCardItem({
         
         {/* 底部按钮区域 */}
         <div className="mt-8 pt-5 border-t border-[#FF6B00]/20">
-          <Link
+          <LinkWithParams
             href={`/agent-store/${agent.id}`}
             className="group/btn relative block w-full text-center px-5 py-3 text-sm font-bold rounded-xl bg-gradient-to-r from-[#FF6B00] via-[#FF7A00] to-[#FF8C00] text-white border-0 transition-all duration-300 hover:from-[#FF8C00] hover:via-[#FF9A00] hover:to-[#FFA040] hover:shadow-xl hover:shadow-[#FF6B00]/40 transform hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
           >
@@ -226,7 +226,7 @@ function AgentCardItem({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </span>
-          </Link>
+          </LinkWithParams>
         </div>
       </div>
     </div>

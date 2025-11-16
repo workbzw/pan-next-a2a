@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useScaffoldReadContract, useScaffoldWriteContract, useScaffoldContract } from "~~/hooks/scaffold-eth";
 import { Address } from "@scaffold-ui/components";
-import Link from "next/link";
+import { LinkWithParams } from "~~/components/LinkWithParams";
 import { formatEther, parseEther } from "viem";
 import { useAccount, useWalletClient, usePublicClient } from "wagmi";
 // useDeployedContractInfo 已移除：不再需要 PaymentSBT 合约信息
@@ -750,9 +750,9 @@ const AgentDetail = () => {
     <>
       <div className="flex items-center flex-col grow pt-10 pb-10">
         <div className="px-5 w-full max-w-4xl">
-          <Link href="/agent-store" className="btn btn-sm mb-4 rounded-lg bg-[#1A110A]/50 border-2 border-[#261A10]/50 text-white hover:bg-[#261A10]/70 hover:border-[#FF6B00]/50 transition-all duration-300">
+          <LinkWithParams href="/agent-store" className="btn btn-sm mb-4 rounded-lg bg-[#1A110A]/50 border-2 border-[#261A10]/50 text-white hover:bg-[#261A10]/70 hover:border-[#FF6B00]/50 transition-all duration-300">
             {t("backToStore")}
-          </Link>
+          </LinkWithParams>
 
           {listing && identity ? (
             <>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import Link from "next/link";
+import { LinkWithParams } from "~~/components/LinkWithParams";
 import { usePathname } from "next/navigation";
 import { hardhat } from "viem/chains";
 import { Bars3Icon, BugAntIcon, ShoppingBagIcon } from "@heroicons/react/24/outline";
@@ -26,6 +26,11 @@ export const HeaderMenuLinks = () => {
       href: "/agent-store",
       icon: <ShoppingBagIcon className="h-4 w-4" />,
     },
+    {
+      label: "Explore",
+      href: "/explore",
+      icon: <Bars3Icon className="h-4 w-4" />,
+    },
     // Debug Contracts - 暂时隐藏，保留代码以便后续恢复
     // {
     //   label: t("debugContracts"),
@@ -38,19 +43,18 @@ export const HeaderMenuLinks = () => {
     <>
       {menuLinks.map(({ label, href, icon }) => {
         // 如果路径是 / 或 /agent-store，Agent Store 按钮应该被选中
-        const isActive = pathname === href || (href === "/agent-store" && pathname === "/");
+        const isActive = pathname === href || (href === "/agent-store" && pathname === "/") || (href === "/explore" && pathname === "/explore");
         return (
           <li key={href}>
-            <Link
+            <LinkWithParams
               href={href}
-              passHref
               className={`${
                 isActive ? "bg-gradient-to-r from-[#FF6B00]/30 to-[#FF8C00]/30 border border-[#FF6B00]/50 text-white" : "text-white/70"
               } hover:bg-gradient-to-r hover:from-[#FF6B00]/20 hover:to-[#FF8C00]/20 hover:text-white py-1.5 px-3 text-sm rounded-lg gap-2 grid grid-flow-col transition-all duration-300`}
             >
               {icon}
               <span>{label}</span>
-            </Link>
+            </LinkWithParams>
           </li>
         );
       })}
