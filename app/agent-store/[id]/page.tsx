@@ -34,13 +34,17 @@ const SBTCard = ({
         return;
       }
       try {
-        const info = await paymentSBTContract.read.getPaymentInfo([tokenId]) as any;
+        const [info, rarity] = await Promise.all([
+          paymentSBTContract.read.getPaymentInfo([tokenId]) as Promise<any>,
+          paymentSBTContract.read.getRarity([tokenId]) as Promise<number>,
+        ]);
         setSbtInfo({
           amount: info.amount,
           payer: info.payer,
           recipient: info.recipient,
           timestamp: info.timestamp,
           description: info.description,
+          rarity: rarity, // 0 = N, 1 = R, 2 = S
         });
       } catch (e) {
         console.error("获取SBT信息失败:", e);
@@ -68,6 +72,32 @@ const SBTCard = ({
     );
   }
 
+  // 根据稀有度获取标签样式
+  const getRarityBadge = (rarity: number) => {
+    switch (rarity) {
+      case 0: // N级 - 灰色
+        return (
+          <div className="badge badge-sm bg-gray-500/20 text-gray-300 border border-gray-500/30">
+            N
+          </div>
+        );
+      case 1: // R级 - 白色
+        return (
+          <div className="badge badge-sm bg-white/20 text-white border border-white/30">
+            R
+          </div>
+        );
+      case 2: // S级 - 彩色（渐变）
+        return (
+          <div className="badge badge-sm bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-white border border-transparent">
+            S
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="p-4 rounded-lg bg-[#1A110A]/50 border border-[#FF6B00]/20 hover:border-[#FF6B00]/40 transition-all">
       <div className="flex justify-between items-start mb-2">
@@ -75,8 +105,11 @@ const SBTCard = ({
           <span className="text-xs text-white/50">{t("tokenId")}</span>
           <span className="ml-2 text-white font-mono">{tokenId.toString()}</span>
         </div>
-        <div className="badge badge-sm bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/30">
-          SBT
+        <div className="flex items-center gap-2">
+          {sbtInfo.rarity !== undefined && getRarityBadge(sbtInfo.rarity)}
+          <div className="badge badge-sm bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/30">
+            SBT
+          </div>
         </div>
       </div>
       <div className="space-y-2 text-sm mt-3">
