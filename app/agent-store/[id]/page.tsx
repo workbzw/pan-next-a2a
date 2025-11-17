@@ -647,9 +647,41 @@ const AgentDetail = () => {
         // 2. 使用链下索引服务
         // 3. 让用户手动选择是否记录
       } else {
+        // 检查是否是 PaymentSBT 授权错误
+        let errorMessage = `请求失败: ${response.status} ${response.statusText}`;
+        const errorData = responseData?.error || responseData?.message || responseData?.details?.error || "";
+        
+        if (errorData && errorData.includes("Only authorized minter")) {
+          // 查询授权地址和当前调用地址
+          try {
+            const authorizedMinter = paymentSBTContract 
+              ? await paymentSBTContract.read.authorizedMinter([])
+              : null;
+            const currentCaller = responseData?.details?.caller || 
+                                  responseData?.caller || 
+                                  responseData?.details?.txHash?.from ||
+                                  t("unknownCallerAddress");
+            
+            const authorizedLabel = t("authorizedMinterAddress");
+            const currentCallerLabel = t("currentCallerAddress");
+            const permissionInfoLabel = t("permissionInfo");
+            const tipLabel = t("minterPermissionTip");
+            
+            errorMessage = `${errorData}\n\n${permissionInfoLabel}:\n` +
+              `✅ ${authorizedLabel}: ${authorizedMinter || t("queryFailed")}\n` +
+              `❌ ${currentCallerLabel}: ${currentCaller}\n\n` +
+              `💡 ${tipLabel}`;
+          } catch (queryError) {
+            console.error("查询授权地址失败:", queryError);
+            errorMessage = `${errorData}\n\n💡 ${t("minterPermissionErrorTip")}`;
+          }
+        } else if (errorData) {
+          errorMessage = errorData;
+        }
+        
         setRequestResult({
           success: false,
-          error: `请求失败: ${response.status} ${response.statusText}`,
+          error: errorMessage,
           data: responseData, // 即使失败也显示响应数据
         });
       }
@@ -824,7 +856,38 @@ const AgentDetail = () => {
                       {requestResult.error && (
                         <div className="mb-3 p-3 bg-red-900/20 rounded-lg border border-red-500/30">
                           <p className="text-sm text-red-300 font-medium">{t("errorMessage")}</p>
-                          <p className="text-sm text-red-200 mt-1 whitespace-pre-wrap">{requestResult.error}</p>
+                          <div className="text-sm text-red-200 mt-1 whitespace-pre-wrap space-y-2">
+                            {requestResult.error.split('\n').map((line: string, index: number) => {
+                              // 高亮显示地址（支持中英文）
+                              const authorizedLabel = t("authorizedMinterAddress");
+                              const callerLabel = t("currentCallerAddress");
+                              const isAuthorizedLine = line.includes(authorizedLabel) || line.includes("授权铸造者地址") || line.includes("Authorized Minter Address");
+                              const isCallerLine = line.includes(callerLabel) || line.includes("当前调用地址") || line.includes("Current Caller Address");
+                              
+                              if (isAuthorizedLine || isCallerLine) {
+                                const colonIndex = line.indexOf(':');
+                                if (colonIndex > 0) {
+                                  const label = line.substring(0, colonIndex).trim();
+                                  const address = line.substring(colonIndex + 1).trim();
+                                  return (
+                                    <div key={index} className="flex items-start gap-2">
+                                      <span className={isAuthorizedLine ? "text-green-400" : "text-red-400"}>
+                                        {isAuthorizedLine ? "✅" : "❌"}
+                                      </span>
+                                      <span>
+                                        <span className="font-medium">{label}:</span>
+                                        <span className="ml-2 font-mono text-xs bg-black/30 px-2 py-1 rounded break-all">
+                                          {address}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                              }
+                              // 普通文本
+                              return <p key={index}>{line}</p>;
+                            })}
+                          </div>
                         </div>
                       )}
                       {requestResult.data !== undefined && (

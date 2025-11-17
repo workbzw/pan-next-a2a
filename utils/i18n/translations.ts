@@ -87,6 +87,13 @@ export const translations = {
     transactionExecutionFailed: "Transaction execution failed, please check contract status and parameters",
     paymentFailed: "Payment failed:",
     requestFailed: "Request failed:",
+    unknownCallerAddress: "Unknown (Please check Agent backend error details)",
+    authorizedMinterAddress: "Authorized Minter Address",
+    currentCallerAddress: "Current Caller Address",
+    permissionInfo: "Permission Information",
+    minterPermissionTip: "Tip: Agent backend must use the authorized minter address to call PaymentSBT contract's mint methods",
+    minterPermissionErrorTip: "Tip: This is a PaymentSBT contract permission error. Please check if the wallet address used by the Agent backend is the authorized minter address",
+    queryFailed: "Query Failed",
     
     // Register
     registerNewAgentTitle: "Register New Agent",
@@ -234,6 +241,13 @@ export const translations = {
     transactionExecutionFailed: "交易執行失敗，請檢查合約狀態和參數",
     paymentFailed: "付款失敗：",
     requestFailed: "請求失敗：",
+    unknownCallerAddress: "未知（請檢查 Agent 後端返回的錯誤詳情）",
+    authorizedMinterAddress: "授權鑄造者地址",
+    currentCallerAddress: "當前調用地址",
+    permissionInfo: "權限信息",
+    minterPermissionTip: "提示：Agent 後端必須使用授權鑄造者地址來調用 PaymentSBT 合約的 mint 方法",
+    minterPermissionErrorTip: "提示：這是 PaymentSBT 合約的權限錯誤，請檢查 Agent 後端使用的錢包地址是否為授權鑄造者地址",
+    queryFailed: "查詢失敗",
     
     // Register
     registerNewAgentTitle: "註冊新 Agent",

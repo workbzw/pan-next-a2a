@@ -863,7 +863,7 @@ const deployedContracts = {
       deployedOnBlock: 72503458,
     },
     PaymentSBT: {
-      address: "0xB05955b5D34171bd9675B9D0BFfe1c73818E671e",
+      address: "0x01B659f7D7Db053e173aB6B9326389037a9E5ad7",
       abi: [
         {
           inputs: [],
@@ -1033,19 +1033,6 @@ const deployedContracts = {
         },
         {
           inputs: [],
-          name: "COMMON_PROBABILITY",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [],
           name: "MAX_BATCH_SIZE",
           outputs: [
             {
@@ -1059,12 +1046,25 @@ const deployedContracts = {
         },
         {
           inputs: [],
-          name: "RARE_PROBABILITY",
+          name: "authorizedMinter",
           outputs: [
             {
-              internalType: "uint256",
+              internalType: "address",
               name: "",
-              type: "uint256",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "authorizedWithdrawer",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
             },
           ],
           stateMutability: "view",
@@ -1283,12 +1283,17 @@ const deployedContracts = {
           outputs: [
             {
               internalType: "uint256",
-              name: "commonCount",
+              name: "nCount",
               type: "uint256",
             },
             {
               internalType: "uint256",
-              name: "rareCount",
+              name: "rCount",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "sCount",
               type: "uint256",
             },
             {
@@ -1556,6 +1561,93 @@ const deployedContracts = {
           type: "function",
         },
         {
+          inputs: [
+            {
+              internalType: "address",
+              name: "recipient",
+              type: "address",
+            },
+            {
+              internalType: "string",
+              name: "description",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "referrer",
+              type: "string",
+            },
+          ],
+          name: "mintNSBT",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "recipient",
+              type: "address",
+            },
+            {
+              internalType: "string",
+              name: "description",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "referrer",
+              type: "string",
+            },
+          ],
+          name: "mintRSBT",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "recipient",
+              type: "address",
+            },
+            {
+              internalType: "string",
+              name: "description",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "referrer",
+              type: "string",
+            },
+          ],
+          name: "mintSSBT",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
           inputs: [],
           name: "owner",
           outputs: [
@@ -1770,11 +1862,37 @@ const deployedContracts = {
           inputs: [
             {
               internalType: "address",
+              name: "newMinter",
+              type: "address",
+            },
+          ],
+          name: "transferMinterRole",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
               name: "newOwner",
               type: "address",
             },
           ],
           name: "transferOwnership",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "newWithdrawer",
+              type: "address",
+            },
+          ],
+          name: "transferWithdrawRole",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",
@@ -1860,7 +1978,7 @@ const deployedContracts = {
         renounceOwnership: "@openzeppelin/contracts/access/Ownable.sol",
         transferOwnership: "@openzeppelin/contracts/access/Ownable.sol",
       },
-      deployedOnBlock: 72503525,
+      deployedOnBlock: 73290619,
     },
     ReputationRegistry: {
       address: "0xa678cbEF73eDBcF570fd52e37fC9b26d496c5f82",
