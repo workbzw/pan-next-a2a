@@ -36,15 +36,25 @@ const SBTCard = ({
       try {
         const [info, rarity] = await Promise.all([
           paymentSBTContract.read.getPaymentInfo([tokenId]) as Promise<any>,
-          paymentSBTContract.read.getRarity([tokenId]) as Promise<number>,
+          paymentSBTContract.read.getRarity([tokenId]) as Promise<bigint | number>,
         ]);
+        // 将 bigint 转换为 number（合约返回的枚举值是 bigint）
+        const rarityFromGetRarity = typeof rarity === 'bigint' ? Number(rarity) : rarity;
+        // 也从 paymentInfo 中获取稀有度（作为备用）
+        const rarityFromInfo = typeof info.rarity === 'bigint' ? Number(info.rarity) : (info.rarity ?? rarityFromGetRarity);
+        // 优先使用 getRarity 的结果，如果为 undefined 则使用 paymentInfo 中的
+        const rarityNumber = rarityFromGetRarity !== undefined ? rarityFromGetRarity : rarityFromInfo;
+        
+        // 调试日志
+        console.log(`[SBTCard] Token ${tokenId.toString()}: getRarity=${rarityFromGetRarity}, paymentInfo.rarity=${rarityFromInfo}, final=${rarityNumber}`);
+        
         setSbtInfo({
           amount: info.amount,
           payer: info.payer,
           recipient: info.recipient,
           timestamp: info.timestamp,
           description: info.description,
-          rarity: rarity, // 0 = N, 1 = R, 2 = S
+          rarity: rarityNumber, // 0 = N, 1 = R, 2 = S
         });
       } catch (e) {
         console.error("获取SBT信息失败:", e);
