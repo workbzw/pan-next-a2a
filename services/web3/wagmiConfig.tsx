@@ -17,28 +17,53 @@ export const wagmiConfig = createConfig({
   client({ chain }) {
     let rpcFallbacks: ReturnType<typeof http>[] = [];
 
-    const rpcOverrideUrl = (scaffoldConfig.rpcOverrides as ScaffoldConfig["rpcOverrides"])?.[chain.id];
-    if (rpcOverrideUrl) {
-      // 使用配置的 RPC URL
-      rpcFallbacks = [http(rpcOverrideUrl)];
-    } else {
-      // 尝试使用 Alchemy RPC
+    // BSC Testnet (chainId: 97) 的特殊处理：添加多个 fallback RPC
+    if (chain.id === 97) {
+      const rpcOverrideUrl = (scaffoldConfig.rpcOverrides as ScaffoldConfig["rpcOverrides"])?.[chain.id];
       const alchemyHttpUrl = getAlchemyHttpUrl(chain.id);
-      if (alchemyHttpUrl) {
-        rpcFallbacks = [http(alchemyHttpUrl)];
+      
+      // 构建多个 fallback RPC，按优先级排序
+      if (rpcOverrideUrl) {
+        // 如果配置了自定义 RPC，优先使用
+        rpcFallbacks = [
+          http(rpcOverrideUrl),
+          // 添加多个公共 RPC 作为 fallback
+          http("https://data-seed-prebsc-1-s1.binance.org:8545"),
+          http("https://data-seed-prebsc-2-s1.binance.org:8545"),
+          http("https://bsc-testnet-rpc.publicnode.com"),
+        ];
+      } else if (alchemyHttpUrl) {
+        // 如果 Alchemy 可用，优先使用，但添加 fallback
+        rpcFallbacks = [
+          http(alchemyHttpUrl),
+          // 添加多个公共 RPC 作为 fallback
+          http("https://data-seed-prebsc-1-s1.binance.org:8545"),
+          http("https://data-seed-prebsc-2-s1.binance.org:8545"),
+          http("https://bsc-testnet-rpc.publicnode.com"),
+        ];
       } else {
-        // 如果没有配置，使用链的默认 RPC（从 chain.rpcUrls 获取）
-        // 但避免使用不支持 CORS 的公共 RPC
-        const defaultRpcUrl = chain.rpcUrls.default.http[0];
-        if (defaultRpcUrl) {
-          rpcFallbacks = [http(defaultRpcUrl)];
+        // 如果没有配置，使用多个公共 RPC
+        rpcFallbacks = [
+          http("https://data-seed-prebsc-1-s1.binance.org:8545"),
+          http("https://data-seed-prebsc-2-s1.binance.org:8545"),
+          http("https://bsc-testnet-rpc.publicnode.com"),
+          http("https://1rpc.io/bnb/testnet"),
+        ];
+      }
+    } else {
+      // 其他链的处理逻辑
+      const rpcOverrideUrl = (scaffoldConfig.rpcOverrides as ScaffoldConfig["rpcOverrides"])?.[chain.id];
+      if (rpcOverrideUrl) {
+        rpcFallbacks = [http(rpcOverrideUrl)];
+      } else {
+        const alchemyHttpUrl = getAlchemyHttpUrl(chain.id);
+        if (alchemyHttpUrl) {
+          rpcFallbacks = [http(alchemyHttpUrl)];
         } else {
-          // 最后的 fallback：使用支持 CORS 的公共 RPC
-          // 对于 BSC Testnet，使用 Binance 官方 RPC
-          if (chain.id === 97) {
-            rpcFallbacks = [http("https://data-seed-prebsc-1-s1.binance.org:8545")];
+          const defaultRpcUrl = chain.rpcUrls.default.http[0];
+          if (defaultRpcUrl) {
+            rpcFallbacks = [http(defaultRpcUrl)];
           } else {
-            // 其他链：使用链的默认 RPC
             rpcFallbacks = [http()];
           }
         }
