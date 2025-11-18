@@ -23,32 +23,35 @@ export const wagmiConfig = createConfig({
       const alchemyHttpUrl = getAlchemyHttpUrl(chain.id);
       
       // 构建多个 fallback RPC，按优先级排序
+      // 公共 RPC 作为可靠的 fallback
+      const publicRpcs = [
+        http("https://data-seed-prebsc-1-s1.binance.org:8545"),
+        http("https://data-seed-prebsc-2-s1.binance.org:8545"),
+        http("https://bsc-testnet-rpc.publicnode.com"),
+        http("https://1rpc.io/bnb/testnet"),
+      ];
+      
       if (rpcOverrideUrl) {
-        // 如果配置了自定义 RPC，优先使用
+        // 如果配置了自定义 RPC（通常是 Alchemy 或环境变量指定的 RPC），优先使用
         rpcFallbacks = [
           http(rpcOverrideUrl),
-          // 添加多个公共 RPC 作为 fallback
-          http("https://data-seed-prebsc-1-s1.binance.org:8545"),
-          http("https://data-seed-prebsc-2-s1.binance.org:8545"),
-          http("https://bsc-testnet-rpc.publicnode.com"),
+          // 如果配置的 RPC 不是 Alchemy，且 Alchemy 可用，也添加到 fallback
+          ...(alchemyHttpUrl && !rpcOverrideUrl.includes("alchemy.com") 
+            ? [http(alchemyHttpUrl)] 
+            : []),
+          // 添加公共 RPC 作为 fallback
+          ...publicRpcs,
         ];
       } else if (alchemyHttpUrl) {
-        // 如果 Alchemy 可用，优先使用，但添加 fallback
+        // 如果没有配置自定义 RPC，但 Alchemy 可用，优先使用 Alchemy
         rpcFallbacks = [
           http(alchemyHttpUrl),
-          // 添加多个公共 RPC 作为 fallback
-          http("https://data-seed-prebsc-1-s1.binance.org:8545"),
-          http("https://data-seed-prebsc-2-s1.binance.org:8545"),
-          http("https://bsc-testnet-rpc.publicnode.com"),
+          // 添加公共 RPC 作为 fallback
+          ...publicRpcs,
         ];
       } else {
-        // 如果没有配置，使用多个公共 RPC
-        rpcFallbacks = [
-          http("https://data-seed-prebsc-1-s1.binance.org:8545"),
-          http("https://data-seed-prebsc-2-s1.binance.org:8545"),
-          http("https://bsc-testnet-rpc.publicnode.com"),
-          http("https://1rpc.io/bnb/testnet"),
-        ];
+        // 如果没有配置，使用公共 RPC
+        rpcFallbacks = publicRpcs;
       }
     } else {
       // 其他链的处理逻辑
