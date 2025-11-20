@@ -24,7 +24,7 @@ export function useSelfMintSBTPoints(address?: `0x${string}`) {
   const { data: rarityStats } = useScaffoldReadContract({
     contractName: "PaymentSBT",
     functionName: "getRarityStatsByOwner",
-    args: targetAddress ? ([targetAddress] as const) : undefined,
+    args: targetAddress ? ([targetAddress] as const) : ([undefined] as const),
     watch: false, // 禁用自动监听，避免频繁更新
   });
 
@@ -180,7 +180,7 @@ export function useReferMintSBTPoints(referrerCode?: string) {
   const { data: tokenIds } = useScaffoldReadContract({
     contractName: "PaymentSBT",
     functionName: "getTokensByReferrer",
-    args: code ? ([code] as const) : undefined,
+    args: code ? ([code] as const) : ([undefined] as const),
     watch: false, // 禁用自动监听，避免频繁更新
   });
 
@@ -216,7 +216,7 @@ export function useReferCreateAgentPoints(referrerCode?: string) {
   const { data: agentIds } = useScaffoldReadContract({
     contractName: "AgentStore",
     functionName: "getAgentsByReferrer",
-    args: code ? ([code] as const) : undefined,
+    args: code ? ([code] as const) : ([undefined] as const),
     watch: false, // 禁用自动监听，避免频繁更新
   });
 
