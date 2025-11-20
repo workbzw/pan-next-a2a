@@ -130,6 +130,8 @@ export const translations = {
     cancel: "Cancel",
     register: "Register",
     registering: "Registering...",
+    registrationFee: "Registration Fee",
+    registrationFeeNotAvailable: "Registration fee not available",
     
     // Home Page
     welcomeToPANNetwork: "Welcome to PAN Network",
@@ -307,6 +309,8 @@ export const translations = {
     cancel: "取消",
     register: "註冊",
     registering: "註冊中...",
+    registrationFee: "註冊費用",
+    registrationFeeNotAvailable: "註冊費用不可用",
     
     // Home Page
     welcomeToPANNetwork: "歡迎來到 PAN Network",
