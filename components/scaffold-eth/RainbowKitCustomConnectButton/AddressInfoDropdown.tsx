@@ -81,12 +81,13 @@ export const AddressInfoDropdown = ({
               )}
             </div>
           </li>
-          <li className={selectingNetwork ? "hidden" : ""}>
+          {/* QRCode 菜单项已隐藏 */}
+          {/* <li className={selectingNetwork ? "hidden" : ""}>
             <label htmlFor="qrcode-modal" className="h-8 btn-sm rounded-xl! flex gap-3 py-3">
               <QrCodeIcon className="h-6 w-4 ml-2 sm:ml-0" />
               <span className="whitespace-nowrap">View QR Code</span>
             </label>
-          </li>
+          </li> */}
           <li className={selectingNetwork ? "hidden" : ""}>
             <button className="h-8 btn-sm rounded-xl! flex gap-3 py-3" type="button">
               <ArrowTopRightOnSquareIcon className="h-6 w-4 ml-2 sm:ml-0" />

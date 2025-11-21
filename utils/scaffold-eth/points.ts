@@ -3,7 +3,7 @@
  * - 自己mintSBT：N级=50积分，R级=700积分，S级=10000积分
  * - 自己创建Agent：每次2200积分
  * - 推荐别人mintSBT：每次10积分
- * - 推荐别人创建Agent：每次2200积分
+ * - 推荐别人创建Agent：每个Agent 200积分
  */
 
 // 积分常量
@@ -13,7 +13,7 @@ export const POINTS = {
   SBT_S: 10000,        // S级SBT积分
   CREATE_AGENT: 2200,  // 创建Agent积分
   REFER_SBT: 10,       // 推荐mintSBT积分
-  REFER_AGENT: 2200,   // 推荐创建Agent积分
+  REFER_AGENT: 200,    // 推荐创建Agent积分（每个Agent）
 } as const;
 
 /**

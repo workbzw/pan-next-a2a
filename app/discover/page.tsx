@@ -106,7 +106,7 @@ const DiscoverPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Hero Section - PANdora Box */}
+      {/* Hero Section - PANdora */}
       <HeroSection />
 
       {/* 主要内容区域 */}
@@ -311,7 +311,7 @@ const DiscoverPage = () => {
 };
 
 /**
- * Hero Section - PANdora Box
+ * Hero Section - PANdora
  */
 function HeroSection() {
   return (
@@ -344,11 +344,11 @@ function HeroSection() {
           </div>
 
           {/* 标题 */}
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">PANdora Box</h1>
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">PANdora</h1>
 
           {/* 描述 */}
           <p className="text-lg text-gray-700 mb-6">
-            Pay 0.005 BNB to open PANdora Box, unlock exclusive AI-generated content!
+            By opening a PANdora box, your agent pays for an agent.
           </p>
 
           {/* 按钮 */}

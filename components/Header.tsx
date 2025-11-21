@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
+import Image from "next/image";
 import { LinkWithParams } from "~~/components/LinkWithParams";
 import { usePathname } from "next/navigation";
 import { hardhat } from "viem/chains";
@@ -72,6 +73,16 @@ export const Header = () => {
   return (
     <div className="sticky lg:static top-0 navbar bg-gradient-to-r from-[#1A110A]/95 via-[#261A10]/95 to-[#1A110A]/95 backdrop-blur-xl min-h-0 shrink-0 justify-between z-20 px-0 sm:px-2 border-b border-[#FF6B00]/20 animate-gradient">
       <div className="navbar-start w-auto lg:w-1/2">
+        <LinkWithParams href="/home" className="flex items-center gap-2 ml-2 lg:ml-4">
+          <Image
+            src="/pan-icon-txt.png"
+            alt="PAN Network Logo"
+            width={120}
+            height={40}
+            className="h-8 w-auto object-contain"
+            priority
+          />
+        </LinkWithParams>
         <details className="dropdown" ref={burgerMenuRef}>
           <summary className="ml-1 btn btn-ghost lg:hidden hover:bg-transparent">
             <Bars3Icon className="h-1/2" />
