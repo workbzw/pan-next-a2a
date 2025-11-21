@@ -152,7 +152,7 @@ const RegisterAgent: NextPage = () => {
                     required
                   />
                   <label className="label pt-1">
-                    <span className="label-text-alt text-sm text-[#FF6B00]/70">
+                    <span className="label-text-alt text-sm text-[#FF6B00]/70 break-words whitespace-normal">
                       {t("agentCardLinkHint")}
                     </span>
                   </label>

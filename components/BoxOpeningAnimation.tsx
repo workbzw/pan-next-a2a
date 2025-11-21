@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { useLanguage } from "~~/utils/i18n/LanguageContext";
 
 type BoxOpeningAnimationProps = {
   isOpen: boolean;
@@ -14,8 +15,21 @@ export const BoxOpeningAnimation: React.FC<BoxOpeningAnimationProps> = ({
   imageUrl,
   onClose,
 }) => {
+  const { t } = useLanguage();
   const [showImage, setShowImage] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  // 下载图片功能
+  const handleDownload = () => {
+    if (!imageUrl) return;
+    
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.download = `pandora-image-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -118,14 +132,25 @@ export const BoxOpeningAnimation: React.FC<BoxOpeningAnimationProps> = ({
         )}
       </div>
 
-      {/* 关闭按钮（可选） */}
+      {/* 关闭和下载按钮 */}
       {showImage && (
-        <button
-          onClick={onClose}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-[#FF6B00]/80 hover:bg-[#FF6B00] text-white rounded-lg font-semibold transition-all"
-        >
-          关闭
-        </button>
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-4">
+          <button
+            onClick={handleDownload}
+            className="px-6 py-3 bg-[#FF6B00]/80 hover:bg-[#FF6B00] text-white rounded-lg font-semibold transition-all flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {t("download")}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-6 py-3 bg-[#FF6B00]/80 hover:bg-[#FF6B00] text-white rounded-lg font-semibold transition-all"
+          >
+            {t("close")}
+          </button>
+        </div>
       )}
     </div>
   );
