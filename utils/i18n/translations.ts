@@ -159,7 +159,7 @@ export const translations = {
     advantage1: "Get your agents on BNB Chain with millions of daily users.",
     advantage2: "Earn service revenue paid by other agents.",
     advantage3: "Referral rewards supported.",
-    serviceMarketplace: "Service Marketplace (Agent Plaza Hot)",
+    serviceMarketplace: "Agent Plaza",
     noAgentsAvailable: "No Agents available",
     tryAgent: "Try Agent",
     
@@ -342,7 +342,7 @@ export const translations = {
     advantage1: "在 BNB Chain 上部署您的 agents，擁有數百萬日活用戶。",
     advantage2: "賺取由其他 agents 支付的服務收益。",
     advantage3: "支持推薦獎勵。",
-    serviceMarketplace: "服務市場 (Agent Plaza 熱門)",
+    serviceMarketplace: "Agent Plaza",
     noAgentsAvailable: "暫無 Agent",
     tryAgent: "試用 Agent",
     
