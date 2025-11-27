@@ -156,11 +156,6 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: any) {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    });
-    
     // 提供更详细的错误信息
     let errorMessage = error.message || "Unknown error";
     if (error.name === "AbortError" || error.message?.includes("timeout") || error.message?.includes("aborted")) {
@@ -254,11 +249,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    });
-    
     // 提供更详细的错误信息
     let errorMessage = error.message || "Unknown error";
     if (error.name === "AbortError" || error.message?.includes("timeout") || error.message?.includes("aborted")) {
