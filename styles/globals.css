@@ -1,4 +1,5 @@
 @import "tailwindcss";
+/* 使用 @import 加载字体，并设置 font-display: swap 确保即使字体未加载也能显示回退字体 */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
@@ -180,6 +181,7 @@
 
   body {
     min-height: 100vh;
+    /* 字体通过 next/font/google 在 layout.tsx 中应用，使用回退字体 */
     font-family: 'Montserrat Alternates', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
 
@@ -191,12 +193,14 @@
   h6 {
     margin-bottom: 0.5rem;
     line-height: 1.2;
-    font-family: 'Montserrat Alternates', sans-serif;
+    /* 字体通过 next/font/google 在 layout.tsx 中应用 */
+    font-family: 'Montserrat Alternates', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     overflow: visible;
   }
 
   * {
-    font-family: 'Montserrat Alternates', sans-serif;
+    /* 字体通过 next/font/google 在 layout.tsx 中应用，使用回退字体 */
+    font-family: 'Montserrat Alternates', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
 }
 
