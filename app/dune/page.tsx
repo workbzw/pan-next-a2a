@@ -256,79 +256,82 @@ export default function DunePage() {
             )}
 
             {/* 结果显示 */}
-            {data && data.state === "QUERY_STATE_COMPLETED" && data.result && (
-              <div className="bg-gradient-to-br from-[#1A110A]/90 to-[#261A10]/90 border border-[#FF6B00]/30 rounded-2xl p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">{t("duneQueryResult")}</h2>
-            
-            {/* 元数据 */}
-            <div className="mb-6 p-4 bg-[#1A110A]/50 rounded-lg">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-white/70">{t("duneTotalRows")}</span>
-                  <span className="text-white ml-2">{data.result.metadata.total_row_count}</span>
-                </div>
-                <div>
-                  <span className="text-white/70">{t("duneExecutionTime")}</span>
-                  <span className="text-white ml-2">{data.result.metadata.execution_time_millis}ms</span>
-                </div>
-                <div>
-                  <span className="text-white/70">{t("duneDataSize")}</span>
-                  <span className="text-white ml-2">{(data.result.metadata.result_set_bytes / 1024).toFixed(2)} KB</span>
-                </div>
-                <div>
-                  <span className="text-white/70">{t("duneDataPoints")}</span>
-                  <span className="text-white ml-2">{data.result.metadata.datapoint_count}</span>
-                </div>
-              </div>
-            </div>
+            {data && data.state === "QUERY_STATE_COMPLETED" && data.result && (() => {
+              const result = data.result;
+              return (
+                <div className="bg-gradient-to-br from-[#1A110A]/90 to-[#261A10]/90 border border-[#FF6B00]/30 rounded-2xl p-6">
+                  <h2 className="text-2xl font-bold text-white mb-4">{t("duneQueryResult")}</h2>
+                  
+                  {/* 元数据 */}
+                  <div className="mb-6 p-4 bg-[#1A110A]/50 rounded-lg">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-white/70">{t("duneTotalRows")}</span>
+                        <span className="text-white ml-2">{result.metadata.total_row_count}</span>
+                      </div>
+                      <div>
+                        <span className="text-white/70">{t("duneExecutionTime")}</span>
+                        <span className="text-white ml-2">{result.metadata.execution_time_millis}ms</span>
+                      </div>
+                      <div>
+                        <span className="text-white/70">{t("duneDataSize")}</span>
+                        <span className="text-white ml-2">{(result.metadata.result_set_bytes / 1024).toFixed(2)} KB</span>
+                      </div>
+                      <div>
+                        <span className="text-white/70">{t("duneDataPoints")}</span>
+                        <span className="text-white ml-2">{result.metadata.datapoint_count}</span>
+                      </div>
+                    </div>
+                  </div>
 
-            {/* 数据表格 */}
-            {data.result.rows.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#FF6B00]/30">
-                      {data.result.metadata.column_names.map((col, idx) => (
-                        <th
-                          key={idx}
-                          className="px-4 py-3 text-left text-white/70 font-semibold text-sm"
-                        >
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.result.rows.slice(0, 100).map((row, rowIdx) => (
-                      <tr
-                        key={rowIdx}
-                        className="border-b border-[#FF6B00]/10 hover:bg-[#FF6B00]/5 transition-colors"
-                      >
-                        {data.result.metadata.column_names.map((col, colIdx) => (
-                          <td
-                            key={colIdx}
-                            className="px-4 py-3 text-white/80 text-sm"
-                          >
-                            {typeof row[col] === "object"
-                              ? JSON.stringify(row[col])
-                              : String(row[col] ?? "")}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {data.result.rows.length > 100 && (
-                  <p className="text-white/50 text-sm mt-4 text-center">
-                    {t("duneShowingRows").replace("{count}", data.result.rows.length.toString())}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-white/70 text-center py-8">{t("duneQueryEmpty")}</p>
-            )}
-              </div>
-            )}
+                  {/* 数据表格 */}
+                  {result.rows.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b border-[#FF6B00]/30">
+                            {result.metadata.column_names.map((col, idx) => (
+                              <th
+                                key={idx}
+                                className="px-4 py-3 text-left text-white/70 font-semibold text-sm"
+                              >
+                                {col}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {result.rows.slice(0, 100).map((row, rowIdx) => (
+                            <tr
+                              key={rowIdx}
+                              className="border-b border-[#FF6B00]/10 hover:bg-[#FF6B00]/5 transition-colors"
+                            >
+                              {result.metadata.column_names.map((col, colIdx) => (
+                                <td
+                                  key={colIdx}
+                                  className="px-4 py-3 text-white/80 text-sm"
+                                >
+                                  {typeof row[col] === "object"
+                                    ? JSON.stringify(row[col])
+                                    : String(row[col] ?? "")}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {result.rows.length > 100 && (
+                        <p className="text-white/50 text-sm mt-4 text-center">
+                          {t("duneShowingRows").replace("{count}", result.rows.length.toString())}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-white/70 text-center py-8">{t("duneQueryEmpty")}</p>
+                  )}
+                </div>
+              );
+            })()}
           </>
         )}
 
