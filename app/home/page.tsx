@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { formatEther } from "viem";
-import { useAccount } from "wagmi";
+import { formatEther, parseEther } from "viem";
+import { useAccount, useWalletClient, usePublicClient } from "wagmi";
 import { useScaffoldReadContract, useScaffoldContract, useCopyToClipboard, useTotalPoints, useSelfMintSBTPoints, useSelfCreateAgentPoints, useReferMintSBTPoints, useReferCreateAgentPoints } from "~~/hooks/scaffold-eth";
 import { LinkWithParams } from "~~/components/LinkWithParams";
 import { useLanguage } from "~~/utils/i18n/LanguageContext";
@@ -11,7 +11,10 @@ import { useAgentCard } from "~~/hooks/useAgentCard";
 import CryptoJS from "crypto-js";
 import { DocumentDuplicateIcon, CheckCircleIcon, KeyIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
-import { addQueryParams } from "~~/utils/urlParams";
+import { addQueryParams, getQueryParam } from "~~/utils/urlParams";
+import { BoxOpeningAnimation } from "~~/components/BoxOpeningAnimation";
+import { ExecutionChecklist } from "~~/components/ExecutionChecklist";
+import { notification } from "~~/utils/scaffold-eth";
 
 const HomePage = () => {
   const { t } = useLanguage();
@@ -23,6 +26,22 @@ const HomePage = () => {
   const [inviteCount, setInviteCount] = useState<number | null>(null);
   const [loadingInviteCount, setLoadingInviteCount] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  
+  // Call Agent 相关状态
+  const [isCalling, setIsCalling] = useState(false);
+  const [requestResult, setRequestResult] = useState<{
+    success: boolean;
+    data?: any;
+    error?: string;
+  } | null>(null);
+  const [showBoxAnimation, setShowBoxAnimation] = useState(false);
+  const [animationImageUrl, setAnimationImageUrl] = useState<string | undefined>(undefined);
+  const [showExecutionChecklist, setShowExecutionChecklist] = useState(false);
+  const [executionSteps, setExecutionSteps] = useState<Array<{id: string; label: string; status: "pending" | "executing" | "completed" | "error"}>>([]);
+  
+  // 获取钱包客户端
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
   // 获取合约实例
   const { data: agentStoreContract } = useScaffoldContract({
@@ -196,6 +215,530 @@ const HomePage = () => {
     }
   };
 
+  // 获取 agent-store/1 的信息（用于 PANdora 卡片）
+  const { data: pandoraAgentInfo } = useScaffoldReadContract({
+    contractName: "AgentStore",
+    functionName: "getAgentFullInfo",
+    args: [BigInt(1)],
+  });
+  
+  const pandoraListing = pandoraAgentInfo?.[0];
+  const pandoraAgentCardLink = pandoraListing?.agentCardLink;
+  
+  // 获取 PANdora Agent Card
+  const { agentCard: pandoraAgentCard, loading: pandoraCardLoading } = useAgentCard(
+    pandoraAgentCardLink,
+    !!pandoraAgentCardLink
+  );
+
+  // 编码交易哈希到base64（用于请求头）
+  const encodeTx = (txHash: string): string => {
+    if (typeof window !== 'undefined') {
+      return btoa(txHash);
+    } else {
+      return Buffer.from(txHash).toString("base64");
+    }
+  };
+
+  // Call Agent 处理函数（从详情页复制并适配）
+  const handleCallPandoraAgent = async () => {
+    // 检查是否已连接钱包
+    if (!address) {
+      // 提示用户连接钱包
+      notification.warning(
+        <div>
+          <p className="font-bold">{t("connectWalletForPayment") || "Please connect your wallet first"}</p>
+          <p className="text-sm mt-1">Connect your wallet to open PANdora box</p>
+        </div>,
+        { duration: 4000 }
+      );
+      return;
+    }
+    
+    if (!pandoraListing || !pandoraAgentCard || pandoraCardLoading) {
+      return;
+    }
+    
+    setIsCalling(true);
+    setRequestResult(null);
+    
+    // 初始化执行步骤
+    const initialSteps = [
+      { id: "wallet", label: t("stepWalletSignature"), status: "pending" as const },
+      { id: "transaction", label: t("stepTransactionSent"), status: "pending" as const },
+      { id: "confirm", label: t("stepTransactionConfirmed"), status: "pending" as const },
+      { id: "api", label: t("stepApiCall"), status: "pending" as const },
+      { id: "image", label: t("stepImageGeneration"), status: "pending" as const },
+    ];
+    setExecutionSteps(initialSteps);
+    setShowExecutionChecklist(true);
+    setShowBoxAnimation(false);
+    
+    // 更新步骤状态的辅助函数
+    const updateStep = (stepId: string, status: "pending" | "executing" | "completed" | "error") => {
+      setExecutionSteps(prev => prev.map(step => 
+        step.id === stepId ? { ...step, status } : step
+      ));
+    };
+    
+    try {
+      if (!pandoraAgentCard) {
+        throw new Error("Agent Card is required to call this Agent");
+      }
+      
+      const method = pandoraAgentCard.calling?.method?.toUpperCase() || "GET";
+      const url = pandoraAgentCard.endpoints?.task;
+      
+      if (!url) {
+        throw new Error("Agent Card must contain 'endpoints.task'");
+      }
+      
+      let requestParams = {};
+      let targetUrl = url;
+      const requestConfig: RequestInit = {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+      
+      if (pandoraAgentCard?.calling?.headers) {
+        Object.entries(pandoraAgentCard.calling.headers).forEach(([key, value]) => {
+          if (value && !value.includes("base64_encoded_transaction_hash") && !value.includes("必需")) {
+            requestConfig.headers = {
+              ...requestConfig.headers,
+              [key]: value,
+            };
+          }
+        });
+      }
+      
+      if (method === "POST" || method === "PUT") {
+        if (pandoraAgentCard?.calling?.note?.includes("请求体可以为空") && Object.keys(requestParams).length === 0) {
+          requestConfig.body = JSON.stringify({});
+        } else {
+          requestConfig.body = JSON.stringify(requestParams);
+        }
+      } else if (method === "GET" || method === "DELETE") {
+        if (Object.keys(requestParams).length > 0) {
+          try {
+            const urlObj = new URL(url);
+            Object.keys(requestParams).forEach((key) => {
+              urlObj.searchParams.append(key, String(requestParams[key as keyof typeof requestParams]));
+            });
+            targetUrl = urlObj.toString();
+          } catch (e) {
+            setRequestResult({
+              success: false,
+              error: t("agentLinkFormatError"),
+            });
+            setIsCalling(false);
+            return;
+          }
+        }
+      }
+      
+      let response: Response;
+      let needsPayment = false;
+      
+      try {
+        updateStep("wallet", "completed");
+        updateStep("transaction", "completed");
+        updateStep("confirm", "completed");
+        updateStep("api", "executing");
+        response = await fetch(targetUrl, requestConfig);
+      } catch (directError: any) {
+        const errorMessage = directError.message || directError.toString();
+        if (
+          errorMessage.includes("CORS") ||
+          errorMessage.includes("Failed to fetch") ||
+          errorMessage.includes("NetworkError") ||
+          errorMessage.includes("Access-Control")
+        ) {
+          try {
+            response = await fetch("/api/proxy-agent", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                url: targetUrl,
+                method: method,
+                headers: requestConfig.headers,
+                body: requestConfig.body,
+              }),
+            });
+          } catch (proxyError: any) {
+            const networkErrorMsg = (t("networkConnectionError" as any) as string) || "Network connection failed. Please check the Agent URL and your network connection.";
+            throw new Error(networkErrorMsg);
+          }
+        } else {
+          throw directError;
+        }
+      }
+      
+      if (response.status === 402) {
+        needsPayment = true;
+        setExecutionSteps([
+          { id: "wallet", label: t("stepWalletSignature"), status: "pending" as const },
+          { id: "transaction", label: t("stepTransactionSent"), status: "pending" as const },
+          { id: "confirm", label: t("stepTransactionConfirmed"), status: "pending" as const },
+          { id: "api", label: t("stepApiCall"), status: "pending" as const },
+          { id: "image", label: t("stepImageGeneration"), status: "pending" as const },
+        ]);
+        
+        if (!address) {
+          throw new Error(t("connectWalletForPayment"));
+        }
+        
+        let paymentDetails;
+        try {
+          const responseData = await response.json();
+          
+          if (responseData.accepts && Array.isArray(responseData.accepts) && responseData.accepts.length > 0) {
+            const accept = responseData.accepts[0];
+            
+            if (!accept.maxAmountRequired && !accept.price && !accept.amount) {
+              throw new Error(t("paymentDetailsFormatError"));
+            }
+            
+            if (!accept.address) {
+              throw new Error(t("paymentDetailsFormatError"));
+            }
+            
+            paymentDetails = {
+              address: accept.address,
+              price: accept.maxAmountRequired || accept.price || accept.amount,
+              currency: accept.currency || "ETH",
+              network: accept.network,
+              description: accept.description,
+              scheme: accept.scheme,
+              resource: accept.resource,
+            };
+          } else if (responseData.data && typeof responseData.data === 'object') {
+            paymentDetails = responseData.data;
+          } else if (responseData.paymentDetails && typeof responseData.paymentDetails === 'object') {
+            paymentDetails = responseData.paymentDetails;
+          } else if (responseData.price !== undefined || responseData.maxAmountRequired !== undefined) {
+            paymentDetails = {
+              ...responseData,
+              price: responseData.price || responseData.maxAmountRequired || responseData.amount,
+            };
+          } else {
+            paymentDetails = responseData;
+          }
+        } catch (e) {
+          if (e instanceof Error && e.message.includes("paymentDetailsFormatError")) {
+            throw e;
+          }
+          throw new Error(t("cannotParse402Response"));
+        }
+        
+        if (!paymentDetails || typeof paymentDetails !== 'object') {
+          throw new Error(t("paymentDetailsFormatError"));
+        }
+        
+        const priceFieldValue = paymentDetails.price || paymentDetails.maxAmountRequired || paymentDetails.amount;
+        if (!priceFieldValue && priceFieldValue !== 0 && priceFieldValue !== "0") {
+          throw new Error(t("paymentDetailsFormatError"));
+        }
+        
+        if (!paymentDetails.price) {
+          paymentDetails.price = priceFieldValue;
+        }
+        
+        if (!paymentDetails.address) {
+          throw new Error(t("paymentDetailsFormatError"));
+        }
+        
+        let priceInWei: bigint;
+        try {
+          const priceStr = paymentDetails.price.toString();
+          const priceNum = parseFloat(priceStr);
+          if (priceNum > 1e12 || priceStr.length > 15) {
+            priceInWei = BigInt(priceStr);
+          } else {
+            priceInWei = parseEther(priceStr);
+          }
+        } catch (e) {
+          throw new Error(`${t("priceFormatError")} ${paymentDetails.price}`);
+        }
+        
+        if (priceInWei <= 0n) {
+          throw new Error(`${t("priceFormatError")} ${paymentDetails.price}`);
+        }
+        
+        const priceInEth = Number(priceInWei) / 1e18;
+        
+        if (priceInEth > 1000) {
+          throw new Error(`Price too large: ${priceInEth} ETH. Maximum allowed: 1000 ETH`);
+        }
+        
+        if (isNaN(priceInEth) || priceInEth <= 0) {
+          throw new Error(`${t("priceFormatError")} ${paymentDetails.price}`);
+        }
+        
+        const agentPaymentAddress = paymentDetails.address as `0x${string}`;
+        
+        if (!walletClient) {
+          throw new Error(t("walletClientNotConnected"));
+        }
+        
+        if (!publicClient) {
+          throw new Error(t("publicClientNotConnected"));
+        }
+        
+        let txHash: string;
+        try {
+          updateStep("wallet", "executing");
+          
+          const hash = await walletClient.sendTransaction({
+            to: agentPaymentAddress,
+            value: priceInWei,
+            account: address as `0x${string}`,
+          });
+          
+          if (!hash) {
+            throw new Error(t("transactionFailedNoHash"));
+          }
+          
+          txHash = hash;
+          
+          updateStep("wallet", "completed");
+          updateStep("transaction", "completed");
+          updateStep("confirm", "executing");
+          
+          const receipt = await publicClient.waitForTransactionReceipt({
+            hash: txHash as `0x${string}`,
+            timeout: 60_000,
+          });
+          
+          updateStep("confirm", "completed");
+          updateStep("api", "executing");
+          
+        } catch (error: any) {
+          setExecutionSteps(prev => prev.map(step => 
+            step.status === "executing" ? { ...step, status: "error" as const } : step
+          ));
+          
+          const errorMessage = error.message || error.shortMessage || error.details || "";
+          const errorString = errorMessage.toLowerCase();
+          const errorName = error.name || "";
+          const errorNameLower = errorName.toLowerCase();
+          
+          if (
+            errorString.includes("user rejected") ||
+            errorString.includes("user denied") ||
+            errorString.includes("user cancelled") ||
+            errorString.includes("rejected") ||
+            errorString.includes("denied") ||
+            errorString.includes("denied transaction signature") ||
+            errorNameLower.includes("userrejected") ||
+            errorNameLower.includes("transactionexecutionerror") ||
+            error.name === "UserRejectedRequestError" ||
+            error.code === 4001 ||
+            error.cause?.code === 4001
+          ) {
+            updateStep("wallet", "error");
+            throw new Error(t("paymentCancelled"));
+          } else if (
+            errorString.includes("insufficient funds") ||
+            errorString.includes("balance") ||
+            error.code === "INSUFFICIENT_FUNDS"
+          ) {
+            updateStep("wallet", "error");
+            throw new Error(t("insufficientFunds"));
+          } else if (errorString.includes("network") || errorString.includes("chain")) {
+            updateStep("wallet", "error");
+            throw new Error(t("networkError"));
+          } else {
+            const friendlyError = errorMessage.includes("ContractFunctionExecutionError") || errorMessage.includes("TransactionExecutionError")
+              ? t("transactionExecutionFailed")
+              : errorMessage || t("unknownError");
+            updateStep("wallet", "error");
+            throw new Error(`${t("paymentFailed")} ${friendlyError}`);
+          }
+        }
+        
+        let paymentHeaderValue: string;
+        if (pandoraAgentCard?.calling?.headers?.["X-PAYMENT"]) {
+          const headerTemplate = pandoraAgentCard.calling.headers["X-PAYMENT"];
+          if (headerTemplate.includes("base64_encoded_transaction_hash") || headerTemplate.includes("必需")) {
+            paymentHeaderValue = encodeTx(txHash);
+          } else {
+            paymentHeaderValue = txHash;
+          }
+        } else {
+          paymentHeaderValue = encodeTx(txHash);
+        }
+        
+        requestConfig.headers = {
+          ...requestConfig.headers,
+          "X-PAYMENT": paymentHeaderValue,
+        };
+        
+        const referrerCode = getQueryParam("referrer");
+        
+        if (method === "POST" || method === "PUT") {
+          try {
+            let bodyData: any = {};
+            if (requestConfig.body) {
+              bodyData = JSON.parse(requestConfig.body as string);
+            }
+            
+            if (!bodyData.ext) {
+              bodyData.ext = {};
+            }
+            
+            if (referrerCode && referrerCode.trim()) {
+              bodyData.ext.referrer = referrerCode.trim();
+            }
+            
+            requestConfig.body = JSON.stringify(bodyData);
+          } catch (e) {
+            const bodyData: any = {};
+            if (referrerCode && referrerCode.trim()) {
+              bodyData.ext = { referrer: referrerCode.trim() };
+            }
+            requestConfig.body = JSON.stringify(bodyData);
+          }
+        } else if (method === "GET" || method === "DELETE") {
+          if (referrerCode && referrerCode.trim()) {
+            try {
+              const bodyData: any = {
+                ext: {
+                  referrer: referrerCode.trim()
+                }
+              };
+              requestConfig.body = JSON.stringify(bodyData);
+            } catch (e) {
+            }
+          }
+        }
+        
+        try {
+          updateStep("api", "executing");
+          response = await fetch(targetUrl, requestConfig);
+        } catch (directError: any) {
+          const errorMessage = directError.message || directError.toString();
+          if (
+            errorMessage.includes("CORS") ||
+            errorMessage.includes("Failed to fetch") ||
+            errorMessage.includes("NetworkError") ||
+            errorMessage.includes("Access-Control")
+          ) {
+            try {
+              response = await fetch("/api/proxy-agent", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  url: targetUrl,
+                  method: method,
+                  headers: requestConfig.headers,
+                  body: requestConfig.body,
+                }),
+              });
+            } catch (proxyError: any) {
+              const networkErrorMsg = (t("networkConnectionError" as any) as string) || "Network connection failed. Please check the Agent URL and your network connection.";
+              throw new Error(networkErrorMsg);
+            }
+          } else {
+            throw directError;
+          }
+        }
+      }
+      
+      let responseData: any;
+      try {
+        responseData = await response.json();
+      } catch (e) {
+        responseData = await response.text();
+      }
+      
+      if (response.ok) {
+        updateStep("api", "completed");
+        updateStep("image", "executing");
+        
+        let imageUrl: string | undefined;
+        
+        if (responseData.image) {
+          imageUrl = responseData.image;
+        } else if (responseData.data?.image) {
+          imageUrl = responseData.data.image;
+        } else if (responseData.result?.image) {
+          imageUrl = responseData.result.image;
+        } else if (responseData.url) {
+          imageUrl = responseData.url;
+        } else if (responseData.data?.url) {
+          imageUrl = responseData.data.url;
+        } else if (typeof responseData === "string" && (responseData.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) || responseData.includes("http"))) {
+          imageUrl = responseData;
+        }
+        
+        if (imageUrl) {
+          setAnimationImageUrl(imageUrl);
+        }
+        
+        updateStep("image", "completed");
+        
+        setTimeout(() => {
+          setShowExecutionChecklist(false);
+          if (imageUrl) {
+            setShowBoxAnimation(true);
+          }
+        }, 1000);
+        
+        setRequestResult({
+          success: true,
+          data: responseData,
+        });
+      } else {
+        let errorMessage = `Request failed: ${response.status} ${response.statusText}`;
+        const errorData = responseData?.message || responseData?.error || responseData?.details?.message || responseData?.details?.error || "";
+        
+        if (errorData && errorData.includes("Only authorized minter")) {
+          try {
+            errorMessage = `${errorData}\n\n💡 ${t("minterPermissionErrorTip")}`;
+          } catch (queryError: any) {
+            errorMessage = `${errorData}\n\n💡 ${t("minterPermissionErrorTip")}`;
+          }
+        } else if (errorData) {
+          errorMessage = errorData;
+        } else {
+          errorMessage = `Request failed: ${response.status} ${response.statusText}. Please check the API response for more details. Full response: ${JSON.stringify(responseData)}`;
+        }
+        
+        updateStep("api", "error");
+        setRequestResult({
+          success: false,
+          error: errorMessage,
+          data: responseData,
+        });
+        
+        setTimeout(() => {
+          setShowExecutionChecklist(false);
+        }, 3000);
+      }
+    } catch (err: any) {
+      setExecutionSteps(prev => prev.map(step => 
+        step.status === "executing" ? { ...step, status: "error" as const } : step
+      ));
+      
+      setRequestResult({
+        success: false,
+        error: err.message || t("unknownError"),
+      });
+      
+      setTimeout(() => {
+        setShowExecutionChecklist(false);
+      }, 3000);
+    } finally {
+      setIsCalling(false);
+    }
+  };
+
   return (
     <div className="relative flex items-center flex-col grow pt-10 pb-10 min-h-screen bg-gradient-to-br from-[#1A110A] via-[#261A10] to-[#1A110A] overflow-hidden">
       {/* 背景装饰元素 */}
@@ -221,15 +764,17 @@ const HomePage = () => {
       <div className="relative px-5 w-full max-w-7xl">
         {/* 欢迎标题 */}
         <div className="mb-12 text-center">
-          <h1 className="text-5xl font-bold text-white mb-4 animate-text-shimmer leading-tight">
+          <h1 className="text-5xl font-bold text-white mb-4 animate-text-shimmer leading-tight whitespace-pre-line">
             {t("welcomeToPANNetwork")}
           </h1>
           <p className="text-xl text-white/70">
             {t("startYourJourney")}
           </p>
-          <p className="text-xl text-white/70">
-            {t("startYourJourneySubtitle")}
-          </p>
+          {t("startYourJourneySubtitle") && (
+            <p className="text-xl text-white/70">
+              {t("startYourJourneySubtitle")}
+            </p>
+          )}
         </div>
 
         {/* 你的余额部分 */}
@@ -371,8 +916,12 @@ const HomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Open Box - Marketplace Style */}
             <div 
-              onClick={() => router.push(addQueryParams("/agent-store/1"))}
-              className="group relative bg-gradient-to-br from-[#1A110A]/90 to-[#261A10]/90 backdrop-blur-xl border border-[#FF6B00]/30 rounded-2xl overflow-hidden shadow-xl shadow-black/30 hover:shadow-[#FF6B00]/20 hover:shadow-2xl transition-all duration-500 hover:border-[#FF6B00]/60 hover:-translate-y-2 cursor-pointer"
+              onClick={handleCallPandoraAgent}
+              className={`group relative bg-gradient-to-br from-[#1A110A]/90 to-[#261A10]/90 backdrop-blur-xl border border-[#FF6B00]/30 rounded-2xl overflow-hidden shadow-xl shadow-black/30 transition-all duration-500 ${
+                address 
+                  ? "hover:shadow-[#FF6B00]/20 hover:shadow-2xl hover:border-[#FF6B00]/60 hover:-translate-y-2 cursor-pointer" 
+                  : "opacity-75 cursor-not-allowed"
+              }`}
             >
               <div className="relative p-6 h-full min-h-[280px] flex flex-col">
                 {/* 右上角 Detail 链接 */}
@@ -424,7 +973,7 @@ const HomePage = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      router.push(addQueryParams("/agent-store/1"));
+                      handleCallPandoraAgent();
                     }}
                     className="hidden md:flex flex-shrink-0 w-10 h-10 rounded-full bg-[#FF6B00]/80 hover:bg-[#FF6B00] text-white items-center justify-center transition-all duration-300 shadow-lg shadow-[#FF6B00]/40 hover:shadow-[#FF6B00]/60"
                   >
@@ -446,8 +995,24 @@ const HomePage = () => {
 
             {/* Create Agent - Marketplace Style */}
             <div 
-              onClick={() => router.push(addQueryParams("/agent-store/register"))}
-              className="group relative bg-gradient-to-br from-[#1A110A]/90 to-[#261A10]/90 backdrop-blur-xl border border-[#FF6B00]/30 rounded-2xl overflow-hidden shadow-xl shadow-black/30 hover:shadow-[#FF6B00]/20 hover:shadow-2xl transition-all duration-500 hover:border-[#FF6B00]/60 hover:-translate-y-2 cursor-pointer"
+              onClick={() => {
+                if (!address) {
+                  notification.warning(
+                    <div>
+                      <p className="font-bold">{t("connectWalletForPayment") || "Please connect your wallet first"}</p>
+                      <p className="text-sm mt-1">Connect your wallet to register an agent</p>
+                    </div>,
+                    { duration: 4000 }
+                  );
+                  return;
+                }
+                router.push(addQueryParams("/agent-store/register"));
+              }}
+              className={`group relative bg-gradient-to-br from-[#1A110A]/90 to-[#261A10]/90 backdrop-blur-xl border border-[#FF6B00]/30 rounded-2xl overflow-hidden shadow-xl shadow-black/30 transition-all duration-500 ${
+                address 
+                  ? "hover:shadow-[#FF6B00]/20 hover:shadow-2xl hover:border-[#FF6B00]/60 hover:-translate-y-2 cursor-pointer" 
+                  : "opacity-75 cursor-not-allowed"
+              }`}
             >
               <div className="relative p-6 h-full min-h-[280px] flex flex-col">
                 {/* 右上角 Detail 链接 */}
@@ -455,6 +1020,16 @@ const HomePage = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!address) {
+                        notification.warning(
+                          <div>
+                            <p className="font-bold">{t("connectWalletForPayment") || "Please connect your wallet first"}</p>
+                            <p className="text-sm mt-1">Connect your wallet to register an agent</p>
+                          </div>,
+                          { duration: 4000 }
+                        );
+                        return;
+                      }
                       router.push(addQueryParams("/agent-store/register"));
                     }}
                     className="text-white text-sm font-medium underline hover:text-[#FF6B00] transition-colors"
@@ -492,6 +1067,16 @@ const HomePage = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!address) {
+                        notification.warning(
+                          <div>
+                            <p className="font-bold">{t("connectWalletForPayment") || "Please connect your wallet first"}</p>
+                            <p className="text-sm mt-1">Connect your wallet to register an agent</p>
+                          </div>,
+                          { duration: 4000 }
+                        );
+                        return;
+                      }
                       router.push(addQueryParams("/agent-store/register"));
                     }}
                     className="hidden md:flex flex-shrink-0 w-10 h-10 rounded-full bg-[#FF6B00]/80 hover:bg-[#FF6B00] text-white items-center justify-center transition-all duration-300 shadow-lg shadow-[#FF6B00]/40 hover:shadow-[#FF6B00]/60"
@@ -623,6 +1208,26 @@ const HomePage = () => {
           </div>
         </div>
       )}
+
+      {/* 执行清单 */}
+      <ExecutionChecklist
+        isOpen={showExecutionChecklist}
+        steps={executionSteps}
+        onComplete={() => {
+          setShowExecutionChecklist(false);
+          setShowBoxAnimation(true);
+        }}
+      />
+
+      {/* 礼盒开启动画 */}
+      <BoxOpeningAnimation
+        isOpen={showBoxAnimation}
+        imageUrl={animationImageUrl}
+        onClose={() => {
+          setShowBoxAnimation(false);
+          setAnimationImageUrl(undefined);
+        }}
+      />
     </div>
   );
 };

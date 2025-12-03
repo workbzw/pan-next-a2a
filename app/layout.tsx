@@ -9,7 +9,7 @@ import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
 export const metadata = getMetadata({
   title: "PANdora",
-  description: "Built with 🏗 Scaffold-ETH 2",
+  description: "Built with PAN",
 });
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {

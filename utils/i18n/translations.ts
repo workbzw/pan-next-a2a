@@ -144,9 +144,9 @@ export const translations = {
     registrationFeeNotAvailable: "Registration fee not available",
     
     // Home Page
-    welcomeToPANNetwork: "Try PANdora",
-    startYourJourney: "Integrated with the Agent-to-Agent Payment Protocol on Chain",
-    startYourJourneySubtitle: "Start your decentralized AI Agent journey",
+    welcomeToPANNetwork: "Fully Agentic,\nFully Paid by Crypto",
+    startYourJourney: "PAN network is redefining the Agent-to-Agent (A2A) economy with on-chain payments",
+    startYourJourneySubtitle: "",
     yourBalance: "Your Balance",
     points: "Points",
     inviteFriends: "Invite friends",
@@ -526,7 +526,7 @@ export const translations = {
     registrationFeeNotAvailable: "註冊費用不可用",
     
     // Home Page
-    welcomeToPANNetwork: "Try PANdora",
+    welcomeToPANNetwork: "Fully Agentic,\nFully Paid by Crypto",
     startYourJourney: "集成鏈上 Agent-to-Agent 支付協議",
     startYourJourneySubtitle: "開啟你的去中心化 AI Agent 之旅",
     yourBalance: "你的餘額",
