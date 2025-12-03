@@ -23,6 +23,20 @@ export default function DunePage() {
   const [dashboardId, setDashboardId] = useState<number | null>(null);
   const [inputDashboardId, setInputDashboardId] = useState("");
   const [activeTab, setActiveTab] = useState<"query" | "dashboard" | "chart">("query");
+  
+  // 统计数据 Query IDs（可以通过环境变量配置）
+  // 注意：这些 Query ID 需要在 Dune Analytics 中创建对应的查询
+  const statsQueryIds = {
+    uniqueWallets: typeof window !== "undefined" 
+      ? parseInt(process.env.NEXT_PUBLIC_DUNE_QUERY_UNIQUE_WALLETS || "0")
+      : parseInt(process.env.DUNE_QUERY_UNIQUE_WALLETS || process.env.NEXT_PUBLIC_DUNE_QUERY_UNIQUE_WALLETS || "0"),
+    paymentCount: typeof window !== "undefined"
+      ? parseInt(process.env.NEXT_PUBLIC_DUNE_QUERY_PAYMENT_COUNT || "0")
+      : parseInt(process.env.DUNE_QUERY_PAYMENT_COUNT || process.env.NEXT_PUBLIC_DUNE_QUERY_PAYMENT_COUNT || "0"),
+    totalPaymentAmount: typeof window !== "undefined"
+      ? parseInt(process.env.NEXT_PUBLIC_DUNE_QUERY_TOTAL_PAYMENT || "0")
+      : parseInt(process.env.DUNE_QUERY_TOTAL_PAYMENT || process.env.NEXT_PUBLIC_DUNE_QUERY_TOTAL_PAYMENT || "0"),
+  };
 
   const hasAccess = hasDuneAccess(address ?? undefined);
 
@@ -80,6 +94,78 @@ export default function DunePage() {
         )}
 
         <DuneAccessGuard>
+
+        {/* 统计数据展示 */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-white mb-6">数据统计</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* 登入钱包数 */}
+            <div className="bg-gradient-to-br from-[#1A110A]/90 to-[#261A10]/90 border border-[#FF6B00]/30 rounded-2xl p-6 hover:border-[#FF6B00]/60 transition-colors">
+              <h3 className="text-lg font-semibold text-white/70 mb-4">登入钱包数</h3>
+              {statsQueryIds.uniqueWallets > 0 ? (
+                <div className="min-h-[80px]">
+                  <DuneChart
+                    queryId={statsQueryIds.uniqueWallets}
+                    chartType="number"
+                    columns={{ value: "count" }}
+                    title=""
+                    autoRefresh={true}
+                    refreshInterval={60}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl font-bold text-[#FF6B00]/50 mb-2">-</div>
+                  <p className="text-white/50 text-sm">请在 .env 中配置<br/>NEXT_PUBLIC_DUNE_QUERY_UNIQUE_WALLETS</p>
+                </div>
+              )}
+            </div>
+
+            {/* 支付次数 */}
+            <div className="bg-gradient-to-br from-[#1A110A]/90 to-[#261A10]/90 border border-[#FF6B00]/30 rounded-2xl p-6 hover:border-[#FF6B00]/60 transition-colors">
+              <h3 className="text-lg font-semibold text-white/70 mb-4">支付次数</h3>
+              {statsQueryIds.paymentCount > 0 ? (
+                <div className="min-h-[80px]">
+                  <DuneChart
+                    queryId={statsQueryIds.paymentCount}
+                    chartType="number"
+                    columns={{ value: "count" }}
+                    title=""
+                    autoRefresh={true}
+                    refreshInterval={60}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl font-bold text-[#FF6B00]/50 mb-2">-</div>
+                  <p className="text-white/50 text-sm">请在 .env 中配置<br/>NEXT_PUBLIC_DUNE_QUERY_PAYMENT_COUNT</p>
+                </div>
+              )}
+            </div>
+
+            {/* 支付金额总数 */}
+            <div className="bg-gradient-to-br from-[#1A110A]/90 to-[#261A10]/90 border border-[#FF6B00]/30 rounded-2xl p-6 hover:border-[#FF6B00]/60 transition-colors">
+              <h3 className="text-lg font-semibold text-white/70 mb-4">支付金额总数</h3>
+              {statsQueryIds.totalPaymentAmount > 0 ? (
+                <div className="min-h-[80px]">
+                  <DuneChart
+                    queryId={statsQueryIds.totalPaymentAmount}
+                    chartType="number"
+                    columns={{ value: "total_amount" }}
+                    title=""
+                    autoRefresh={true}
+                    refreshInterval={60}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl font-bold text-[#FF6B00]/50 mb-2">-</div>
+                  <p className="text-white/50 text-sm">请在 .env 中配置<br/>NEXT_PUBLIC_DUNE_QUERY_TOTAL_PAYMENT</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* 标签页切换 */}
         <div className="flex gap-4 mb-8 border-b border-[#FF6B00]/30">
