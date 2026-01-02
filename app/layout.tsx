@@ -10,7 +10,7 @@ import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 export const metadata = getMetadata({
   title: "PANdora",
   description: "Decentralized AI Agent Marketplace - Discover, Create, and Trade AI Agents on PAN Network",
-  imageRelativePath: "/pan-icon-txt.png",
+  imageRelativePath: "/shareimg.jpg",
 });
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
