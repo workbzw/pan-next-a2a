@@ -792,7 +792,7 @@ const HomePage = () => {
       <div className="relative px-5 w-full max-w-7xl">
         {/* 欢迎标题 */}
         <div className="mb-12 text-center">
-          <h1 className="text-5xl font-bold text-white mb-4 animate-text-shimmer leading-tight whitespace-pre-line">
+          <h1 className="text-6xl font-bold text-white mb-4 animate-text-shimmer leading-tight whitespace-pre-line">
             {t("welcomeToPANNetwork")}
           </h1>
           <p className="text-xl text-white/70">
