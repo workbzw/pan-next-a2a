@@ -798,11 +798,6 @@ const HomePage = () => {
           <p className="text-xl text-white/70">
             {t("startYourJourney")}
           </p>
-          {t("startYourJourneySubtitle") && (
-            <p className="text-xl text-white/70">
-              {t("startYourJourneySubtitle")}
-            </p>
-          )}
         </div>
 
         {/* 你的余额部分 */}
@@ -1286,21 +1281,21 @@ function AgentCard({ agent }: { agent: any }) {
         if (/^\d+$/.test(price)) {
           const priceBigInt = BigInt(price);
           const formatted = formatEther(priceBigInt);
-          return `${parseFloat(formatted).toFixed(6).replace(/\.?0+$/, "")} BNB/次`;
+          return `${parseFloat(formatted).toFixed(6).replace(/\.?0+$/, "")} BNB ${t("perTime")}`;
         }
         // 如果已经是格式化的字符串（如 "0.005"），直接返回
-        return `${price} BNB/次`;
+        return `${price} BNB ${t("perTime")}`;
       }
       // 如果是数字，假设是 wei 单位
       if (typeof price === "number") {
         const priceBigInt = BigInt(Math.floor(price));
         const formatted = formatEther(priceBigInt);
-        return `${parseFloat(formatted).toFixed(6).replace(/\.?0+$/, "")} BNB/次`;
+        return `${parseFloat(formatted).toFixed(6).replace(/\.?0+$/, "")} BNB ${t("perTime")}`;
       }
       return t("pricePending");
     } catch (error) {
       // 如果转换失败，返回原始值或默认值
-      return typeof price === "string" ? `${price} BNB/次` : t("pricePending");
+      return typeof price === "string" ? `${price} BNB ${t("perTime")}` : t("pricePending");
     }
   };
   

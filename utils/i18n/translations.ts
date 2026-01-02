@@ -22,6 +22,7 @@ export const translations = {
     viewDetails: "View Details",
     usage: "Usage",
     times: "times",
+    perTime: "per time",
     noDescription: "No description",
     pricePending: "Price Pending",
     
@@ -258,6 +259,7 @@ export const translations = {
     viewDetails: "상세 보기",
     usage: "사용",
     times: "회",
+    perTime: "회당",
     noDescription: "설명 없음",
     pricePending: "가격 대기 중",
     
@@ -494,6 +496,7 @@ export const translations = {
     viewDetails: "查看詳情",
     usage: "使用",
     times: "次",
+    perTime: "次",
     noDescription: "暫無描述",
     pricePending: "價格待定",
     

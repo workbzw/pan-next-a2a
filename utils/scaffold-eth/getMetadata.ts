@@ -24,6 +24,8 @@ export const getMetadata = ({
     },
     description: description,
     openGraph: {
+      type: "website",
+      siteName: "PANdora",
       title: {
         default: title,
         template: titleTemplate,
@@ -32,10 +34,14 @@ export const getMetadata = ({
       images: [
         {
           url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: "PANdora - Decentralized AI Agent Marketplace",
         },
       ],
     },
     twitter: {
+      card: "summary_large_image",
       title: {
         default: title,
         template: titleTemplate,
